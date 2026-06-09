@@ -1,0 +1,625 @@
+A Trained-once Crowd Counting Method Using Differential
+WiFi Channel State Information
+Simone Di Domenico Mauro De Sanctis Ernestina Cianca
+Giuseppe Bianchi
+University of Roma Tor Vergata, via del politecnico 1, 00133, Rome, Italy
+{simone.di.domenico; mauro.de.sanctis; ernestina.cianca; giuseppe.bianchi}@uniroma2.it
+ABSTRACT
+This paper focuses on the problem of providing a rough
+count of the number of people in a room using passive WiFi
+Channel State Information (CSI) measurements taken by a
+single commodity receiver. The feature which mainly distin-
+guishes our work from others is the attempt to emerge with
+an approach which does not require any dedicated training
+inside the speciﬁc environment where the system is deployed.
+Our proposal stems from the intuitive observation that fea-
+tures which account for variations of CSI are expected to
+be less sensitive to the surrounding environment as opposed
+to features which account for absolute CSI measurements.
+We turn such intuition into a concrete proposal, by suitably
+identifying a set of diﬀerential CSI feature candidates, and
+by selecting the (two) most eﬀective ones via minimization
+of the summation of the Davies-Bouldin indexes. We pre-
+liminary assess the eﬀectiveness of the proposed approach
+by training once for all the system in a room, and testing
+the system in two diﬀerent rooms having diﬀerent size and
+furniture, and involving people freely moving in the rooms
+with no a-priori movement constraints.
+Keywords
+Device-free, People Counting, WiFi, RF sensing, Crowd Coun-
+ting, CSI, RSSI.
+1. INTRODUCTION
+Crowd counting is the process of estimating the number
+of people in a given area, in either an open or closed en-
+vironment. This process may be required in both safety
+critical and uncritical situations. Tracking human queues or
+counting people sitting in a waiting room in areas like re-
+tail stores or airports, hospitals and theme parks [1] could
+be used for improving the oﬀered services. Such improved
+services result in a better user satisfaction but also reduced
+costs and improved eﬃciency. In the transportation, bus and
+Permission to make digital or hard copies of all or part of this work for personal or
+classroom use is granted without fee provided that copies are not made or distributed
+for proﬁt or commercial advantage and that copies bear this notice and the full citation
+on the ﬁrst page. Copyrights for components of this work owned by others than ACM
+must be honored. Abstracting with credit is permitted. To copy otherwise, or repu-
+blish, to post on servers or to redistribute to lists, requires prior speciﬁc permission
+and/or a fee. Request permissions from permissions@acm.org.
+WPA ’16, June 26, 2016, Singapore.
+c© 2016 ACM. ISBN 978-1-4503-4328-2/16/06. . . $15.00
+DOI: http://dx.doi.org/10.1145/2935651.2935657
+train schedules or boarding and payment processes could be
+adjusted according to the number of people waiting for the
+service.
+In most of the applications, the required accuracy of this
+estimation decreases as the number of people increases. On
+one hand, it is important to distinguish between empty room,
+one person in a room, two persons in a room. On the other
+hand, for a higher number of people it is suﬃcient to have a
+density estimation like stating what is the probability that
+there are, say, 3 to 5 people, or 6-10, or 11-20, and so on.
+In this paper we focus on RF-based device-free sensing
+which does not require any speciﬁc user cooperation [2]. RF-
+based device-free crowd counting techniques are in general
+based on some kind of measurement of the impact of the pre-
+sence of diﬀerent numbers of people on the RF propagation
+channel. So far, most of the approaches are based on mea-
+suring and properly processing the RSSI of the RF signal
+[3], [4], [5], [6], [7]. A more recent approach uses the Chan-
+nel State Information (CSI) measurements available with a
+speciﬁc tool for the Intel 5300 WiFi card to describe the
+propagation channel variations [8], [9].
+It is worth noting that all these works requires a training
+phase, which must be performed in the same environment
+as the one in which the crowd counting is needed, with the
+same setting conditions (e.g., same position of transmitters
+and receivers). So, these techniques cannot be used in envi-
+ronments diﬀerent from the ones in which the training phase
+has been performed. This is the biggest limit of RF-based
+device-free crowd counting and more generally of activity
+recognition technique. While it is recognized that overco-
+ming this limit is fundamental, to the best of our knowledge
+very little work has been spent so far on such more challen-
+ging problem. This paper documents our ﬁrst step in this
+important direction.
+Speciﬁcally, in this paper, we propose and preliminarily
+assess a crowd counting method that is based on diﬀerential
+measurements of the CSI gathered by a single WiFi recei-
+ver and a normalization process. The usage of diﬀerential
+CSI features (opposed to absolute CSI features) stems from
+the intuitive fact that the multipath experienced in diﬀe-
+rent environments of course signiﬁcantly varies from room
+to room, depending on size, topology, furnishing, materials,
+and so on. But the diﬀerence in the multipath experien-
+ced by consecutive frames is arguably less sensitive to the
+(static) environment characteristics and instead is expected
+to depend mainly from the number of people moving in the
+environment.37
+In the remainder of this paper we identify speciﬁc features
+related to CSI variations, we propose a relevant normaliza-
+tion, and we apply machine learning techniques (speciﬁcally,
+minimization of the sum of the Davies-Bouldin indexes) to
+select the most eﬀective pair of features. Furthermore, we
+show, through experimental results, that this method can
+be used in environments diﬀerent than the ones over which
+the training phase is performed. The achieved performance
+in terms of accuracy/error are promising, also in comparison
+with the performance of other techniques proposed in litera-
+ture, or the same technique but used after a training phase
+performed exactly in the same environment where the cro-
+wd counting is performed. Moreover, these promising per-
+formance have been achieved even in tests conditions more
+diﬃcult than the ones considered in other previous works.
+More speciﬁcally:
+• a single WiFi Access Point (AP) and a single WiFi
+receiver are used whilst most of the related works use
+multiple APs/trasnmitters and receivers;
+• volunteers move as they wanted (randomly, repeating
+a path, etc.) or they simply stand;
+• we have set a time duration of the rolling window
+W = 10 s that is an acceptable value for the estima-
+tion delay. A larger window size allows to increase the
+accuracy thanks to a better statistical analysis, howe-
+ver, a large window size is helpless when the crowd size
+changes more frequently than the estimation delay.
+2. ARCHITECTURE AND EXPERIMENTAL
+SETUP
+In this Section, we present the architecture and the expe-
+rimental setup of our crowd counting system, which is based
+on CSI data collected from WiFi AP. The system includes
+the following modules: a commercial standard 2.4 GHz Wi-
+Fi b/g/n AP which acts as a double antenna transmitter;
+a laptop with Ubuntu 10.04 LTS with the Intel WiFi Link
+5300 wireless NIC with 3 antennas which acts as receiver. A
+Matlab script running on the same laptop processes oﬄine
+the collected data and provides the information about the
+estimated number of people. The laptop sends ICMP echo
+request packets every 20 ms to the WiFi AP and receives
+the ICMP echo reply packets.
+CSI data are extracted from the received packets by using
+a modiﬁed version of a open-source wireless driver [9]. We
+carried out WiFi CSI collection on three diﬀerent rooms, see
+Figure 1:
+• Room A: small size oﬃce room (5m × 6m).
+• Room B: medium size meeting room (5m × 9m).
+• Room C: large size meeting room (6m × 12.5m).
+The furniture and the location of the AP and the WiFi
+receiver is shown in Figure 1. The distance between the AP
+and the WiFi receiver was larger than 5 m in any room,
+while the distance between any volunteer and the AP (or
+the receiver) was larger than 1.5 m. The size of the crowd
+was limited to Nc = 7 people. No guidelines or limitations
+to movements have been given to the volunteers which could
+walk or stand ﬁrm following a random sequence. A number
+of NCSI = 5000 CSI measurements has been collected for
+Figure 1: Experimental environments.
+each class of people (from 0 to Nc = 7) and for each room.
+The collected CSI data are processed oﬄine to build the
+dataset performing data fusion, feature extraction, feature
+selection and classiﬁcation tasks.
+3. DIFFERENTIAL APPROACH
+In the following Section, we describe the methodology of
+our CSI-based crowd counting system. First, we present the
+source data, i.e. the CSI, exploited by the counting system.
+After that, we show which features have been considered
+and then selected to maximize the performance. Lastly, we
+brieﬂy describe the classiﬁcation algorithm.
+3.1 CSI data
+In radio communications, the transmitted electromagne-
+tic waves reach the receiving antenna by more paths, this
+phenomenon is also known as multipath propagation. The
+presence and the movements of a human body imprint an
+information on the intercepted multipath components and
+hence on the Channel Frequency Response (CFR), making it
+possible the recognition of its presence, activity and gesture
+without wearing any device or sensor.
+CFR variations are exploited by our system, in particu-
+lar, in place of CFR we use the CSI estimated by the WiFi
+OFDM receiver. An OFDM-based transmission encodes the
+digital data stream on a set of orthogonal sub-carriers. Let
+us denote with y the received complex vector after the FFT
+at the receiver, y can be expressed as follows:
+y = hc · x + n, (1)
+where x is the transmitted complex vector, and hc is the
+complex channel response vector in the frequency domain,
+and n is the additive gaussian noise vector. The i-th com-
+ponent of hc is the CSI value of the i-th OFDM subcarrier,
+which represents the complex channel gain for the i-th sub-
+carrier. To estimate x, the receiver needs to estimate the
+channel vector hc, so this estimation is available at the re-
+ceiver. Therefore, we used the modiﬁed ﬁrmware of the IWL
+5300 NIC to gather the raw CSI values available at the recei-38
+ver. The used ﬁrmware provides the CSI value for Nsub = 30
+OFDM subcarriers. The complex vector containing the 30
+CSI values (hereinafter CSI vector) can be expressed as
+h = [h1, h2, ..., h30], (2)
+where the CSI of the i-th subcarrier is deﬁned as:
+hi = |hi|ej∠hi , (3)
+where |hi| is the amplitude and ∠hi is the phase of the chan-
+nel of the i-th subcarrier. In our experiments we have used
+2 transmit antennas and 3 receive antennas, therefore Nch
+= 6 RF channels are available for processing. This means
+that for each received packet Nch CSI vectors can be used
+to extract the desired features.
+3.2 CSI feature extraction
+The key idea behind the choice of the features that can
+make the system performance as independent as possible
+from the need of a training phase is the following: when
+there are no people in the room, the multipath environment
+is nearly constant and the observed variations are only due
+to the thermal noise and interference. On the other hand,
+if one person is moving inside the room, one or more mul-
+tipath components change over the time, consequently, the
+CSI across all the subcarriers varies. Moreover, it is intuiti-
+ve that two people walking into the room introduce higher
+multipath variation compared to one person walking. In ge-
+neral, an increase of the number of people also increase the
+multipath variations as a consequence of the higher number
+of moving scatterers. Therefore, our crowd counting system
+is based on a measurement of how the CSI varies over the ti-
+me, which should depend mainly from the number of people
+moving in the environment rather than the characteristic
+of the environment itself (like the size, the furniture, the
+material of walls, etc.).
+Figure 2 shows a set of collected CSI curves for the empty,
+one person, two persons and three persons scenarios. This
+Figure supports our intuition, in fact, it shows that the more
+are the persons in the environment, the more is the CSI
+variation across all the subcarriers.
+In particular, we have chosen to use as a basic descriptor
+the Euclidean distance between two CSI vectors, i.e bet-
+ween two CSI. Two important steps of the feature extrac-
+tion are the proper choice of the normalization to be per-
+formed, which can further help in reducing the dependence
+from the background environment, and also the selection of
+the scheme to combine the information collected from the
+Nch RF channels. The following normalizations have been
+considered: Figure 2: CSI curves for diﬀerent scenarios39
+ˆhk
+j =
+
+
+
+hk
+j (4a)
+hk
+j
+m(hk
+j ) (4b)
+hk
+j
+√
+e(hk
+j )
+(4c)
+where hk
+j is the CSI vector of the received packet at the
+k-th time sample on the j-th channel, and m(hk
+j ) and e(hk
+j )
+are the sample mean and the sample energy of the hk
+j re-
+spectively.
+The second level of normalization is related to the Eucli-
+dean distance computed between two CSIs. In this case, the
+following normalizations have been considered:
+dk,l
+j =
+
+
+
+deuc(hk
+j , hl
+j ) (5a)
+deuc(hk
+j , hl
+j )
+m(hk
+j ) · m(hl
+j ) (5b)
+deuc(hk
+j , hl
+j )
+√
+m(hk
+j ) · m(hl
+j )
+(5c)
+deuc(hk
+j , hl
+j )
+4
+√Γk · Γl (5d)
+where the function deuc(hk
+j , hl
+j ) is the Euclidean distance
+between the k-th and l-th CSI vectors received on the j-th
+channel, and Γk and Γl are the total received signal strength
+for the k-th and l-th received packet respectively. The di-
+stance between CSIs has been computed for each channel,
+therefore Nch sets of distances were available for the feature
+extraction.
+The distances computed over the Nch channels have to
+be fused together and to this end we have considered the
+following combining schemes:
+Dk,l =
+
+
+
+Nch∑
+j=1
+dk,l
+j (6a)
+Nch∑
+j=1
+dk,l
+j
+4
+√
+Γk
+j · Γl
+j
+(6b)
+Nch∑
+j=1
+Γk
+j · Γl
+j
+Γk · Γl · dk,l
+j (6c)
+where Γk
+j and Γl
+j are the received signal strength for the k-
+th and l-th received packet on the j-th channel respectively.
+Notice that Γk
+1 = Γk
+4 , Γk
+2 = Γk
+5 , and Γk
+3 = Γk
+6 . This is because
+these couples of channels share the same receive antenna,
+thus the received signal strength indicator is the same.
+The last step to compute the features is applying a stati-
+stical analysis of the combined distance over a temporal sli-
+ding window of size W packets. The width W of the rolling
+window has an important role on the classiﬁcation accuracy
+of the crowd-counting system. In fact, increasing the win-
+dow size allows to collect and process more data, improving
+the performance, but at the same time also increasing the
+estimation delay. The statistical moments have been evalua-
+ted using both the distance between consecutive CSIs and
+between all pairs of CSIs within the sliding window. Consi-
+dering all the distances within a temporal window can lead
+to extract features that are more informative for the crowd
+density recognition. The statistical analysis was performed
+through the ﬁrst and second order statistical moments, so
+the extracted features are the following:
+F
+
+
+
+m(D) (7a)
+σ(D) (7b)
+σ(D)
+m(D) (7c)
+σ2(D)
+m(D) (7d)
+where m(·) is the sample mean, σ(·) is the sample standard
+deviation, σ(·)
+m(·) is the sample coeﬃcient of variation, and
+σ2(·)
+m(·) is the sample index of dispersion.
+3.3 Feature Selection and Classiﬁcation
+In our approach we used a pair of features selected from
+the overall set of features previously deﬁned. In order to
+select the best combination of feature which maximizes the
+classiﬁcation accuracy we computed the Davies-Bouldin in-
+dex DBp,q for a pair of classes (p, q) which is given by:
+DBp,q = ||σp|| + ||σq ||
+||µp − µq || (8)
+where µp and σp are the sample mean and the sample va-
+riance of a pair of features (Fa, Fb) for the p-th class. In
+addition, p, q = 0, 1, 2, ..., Nc, DBp,q = DBq,p and DBp,p =
+0.
+Then, we applied an exhaustive search optimization me-
+thod over all pairs of features where the objective function
+f (Fa, Fb) to minimize is the summation of Davies-Bouldin
+indexes:
+f (Fa, Fb) =
+Nc−1∑
+p=0
+Nc∑
+q=p+1
+DBp,q (9)
+In this optimization step, the three datasets of CSI mea-
+surements collected in the three rooms have been merged.
+Therefore, the classes regarding the same number of people
+are merged for the three rooms, and we aim to minimize the
+intra-class distances and to maximize the inter-class distan-
+ces building well separated and compact clusters based on
+the selected pair of features.
+Finally, we found that the best pair of features is repre-
+sented by:
+1. Fa: F (7a), Dk,l (6a), dk,l
+j (5d), ˆhk
+j (4b).
+2. Fb: F (7d), Dk,l (6a), dk,l
+j (5d), ˆhk
+j (4b).
+The estimation of density or the estimation of the number of
+people was achieved using the linear discriminant classiﬁer.40
+4. EXPERIMENTAL RESULTS
+The classiﬁer was trained using 50% of the dataset col-
+lected in Room B; Room B was chosen to train the classi-
+ﬁer since it represents the middle size room with respect to
+Room A and Room C. Classiﬁcation results are presented
+in the following subsection. Classiﬁcation tests in Room A
+and Room C are performed using the overall datasets of the
+corresponding room, while classiﬁcation tests in Room B are
+performed using 50% of the dataset of Room B.
+Results are presented in Table 1 and 2 in terms of confu-
+sion matrices for the crowd counting case (8 classes) and for
+the occupancy estimation case (5 classes).
+For the crowd counting case, the results show that more
+than 91% and 81% estimation errors are less or equal than
+2 persons in Room A and Room C respectively. Good per-
+formance in terms of average accuracy is achieved in Room
+A, while acceptable average accuracy is achieved in Room
+C.
+It is worth noting that in the smallest room, i.e Room
+A, the classiﬁcation accuracy for a small number of persons
+is higher than that obtained in the biggest room, i.e Room
+C. Conversely, the estimation of the crowd density for a
+high number of people is higher in the biggest room rather
+than in the smallest one. This is because few people in
+a small environment move more closer to the transmitter
+and/or the receiver, so they cause a higher variation on the
+channel frequency response, making it distance feature more
+discriminant. Conversely, when a high crowd of people is in
+the environment, the moving area is spatially limited, thus
+distance tends to saturate its range loosing the ability to
+discriminate with high accuracy the crowd size.
+Prediction
+Empty 1 person 2 people 3,4 people 5,6,7 people
+Empty 1 0 0 0 0
+Truth 1 person 0 0.79 0.22 0 0
+2 people 0 0.10 0.85 0.05 0
+3,4 people 0 0 0.40 0.55 0.05
+5,6,7 people 0 0 0.12 0.36 0.52
+0.74
+Table 1: Confusion matrix for the Room A
+Prediction
+Empty 1 person 2 people 3,4 people 5,6,7 people
+Empty 1 0 0 0 0
+Truth 1 person 0 0.44 0.11 0.31 0.14
+2 people 0 0.18 0.14 0.41 0.27
+3,4 people 0 0.01 0.04 0.12 0.83
+5,6,7 people 0 0 0 0.10 0.90
+0.52
+Table 2: Confusion matrix for the Room C
+5. RELATED WORKS AND ESTIMATION
+ACCURACIES
+This Section provides an overview of the most important
+related works. They can be divided into two main categories:
+RSSI-based and CSI-based. As a matter of fact, most of the
+works are based on RSSI measurements.
+Depatla et al. developed a mathematical expression for
+the probability distribution of the received signal amplitu-
+de as a function of the total number of occupants, which is
+the base for people counting using Kullback-Leibler diver-
+gence [3]. A single AP and a single receiver are used and the
+estimation delay is 300 s. Two sites are used in the experi-
+ments: an indoor site with the dimension 4.4 × 7.5 m2 and
+an outdoor site with the dimension 7 × 10 m2. Experiments
+performed with up to 9 people show that an error of 2 or
+less is achieved 96% and 63% of the time for the outdoor
+and indoor cases respectively, when using the typical omni-
+directional antennas that come as part of the standard WiFi
+cards.
+Xu et al. deployed an infrastructure of 20 to 22 devices
+to count and localize subjects in large areas [4]. The radio
+devices used in the experiments contain a Chipcon CC1100
+radio transceiver operating in the unlicensed band at 909.1
+MHz. Each transmitter periodically broadcasts a 10-byte
+packet every 100 ms. When the receiver receives a packet,
+it measures the RSS values and wraps the transmitter ID,
+receiver ID, RSS, timestamp (on the receiver side) into a
+service packet which is sent to a centralized system for data
+collection and analysis. Experimental results show that SC-
+PL works well in two diﬀerent typical indoor environments
+of 150 m2 (oﬃce cubicles) and 400 m2 (open ﬂoor plan). In
+both spaces, we can achieve about an 86% accuracy for up
+to 4 subjects.
+Yuan et al. deployed a grid of 16 sensor nodes (TelosB)
+in a room with dimension 18 × 18 m2 [5]. A database ser-
+ver collects the signal strengths and uses the information
+to cluster the crowd density level in the room. An avera-
+ge accuracy of 86% was achieved to estimate three types of
+densities are estimated: low (0-3 persons), moderate (4-10
+persons) and high (>10 persons).
+Fadhlullah et al. deployed three ZigBee wireless nodes
+continuously reporting the received signal strength indica-
+tor to the main node [6]. The average RSSI was calcula-
+ted using the recorded information of all tags and classi-
+ﬁed into three crowd density categories which are low (0-5
+persons), medium (6-10 persons), and high (11-15 persons).
+The results showed that the system was 75% and 70% accu-
+rate in detecting the low and medium human crowd density,
+respectively.
+Yoshida et al. applied a regression-based approach to
+count the number of people using the RSSI collected by 10
+nodes using one AP in a single room [7]. The estimation
+delay is 300 s. The accuracy of support vector regression-
+based method for estimating the number of people is 77%
+for up to 7 people.
+The only CSI-based crowd counting method proposed in
+literature is [8]. They applied a Gray Verhulst model to con-
+struct a normal proﬁle of the percentage of nonzero elements
+of the dilated matrix of CSIs for each class. The experiments
+are carried out counting up to 30 persons in both indoor and
+outdoor settings using a single AP and 3 or 4 receivers. The
+results show that this approach achieves an error ranging
+from 2 persons to three persons; more than 98% estimation
+errors are less than 2 persons in indoor environment, while
+about 70% errors is 2 persons in outdoor environment.
+Comparison of performance and experimental setup among
+crowd counting methods including our method is shown in
+Table 3. It is worth noting that all the reported methods,
+except our method, perform a training phase in the same
+room where they perform the crowd counting test.41
+Table 3: Comparison of device-free crowd counting methods
+Ref Environments Max # of
+People Standards Source
+Data # TXs # RXs Estimation Delay
+(window size W)
+Crowd Counting
+Accuracy
+Crowd Density
+Accuracy
+[3] 2 (indoor 33 m2,
+outdoor 70 m2) 9 WiFi RSSI 1 1 300 s P(e≤ 2) = 96%(outdoor)
+P(e≤ 2) = 63%(indoor) -
+[4] 2 (indoor 150 m2,
+indoor 400 m2) 4 ISM 909.1 MHz RSSI 12/13 8/9 1 s 84% -
+[5] 1 (indoor 324 m2) >10 ISM 2.4 GHz RSSI 16 16 - - 86%
+(0p-3p, 4p-10p, >10p)
+[6] 1 (indoor 100 m2) 15 ZigBee 2.4 GHz RSSI 1 3 - - 73%
+(5p, 10p, 15p)
+[7] 1 (indoor) 7 WiFi RSSI 1 10 300 s 77% 94%
+(0p, 1p-3p, 3p-7p)
+[8] 2 (indoor, outdoor) 30 WiFi CSI 1 3/4 - P(e≤ 2) = 70% (outdoor)
+P(e≤ 2) = 98% (indoor) -
+Our system
+3 (indoor 30 m2,
+indoor 45 m2,
+indoor 70 m2)
+7 WiFi CSI 1 1 10 s P(e≤2) = 91% (room A)
+P(e≤2) = 81%(room C)
+74% (room A)
+52% (room C)
+(0p, 1p, 2p, 3p-4p, 5p-7p)
+6. CONCLUSION
+In conclusion, to the best of our knowledge, this is the
+ﬁrst WiFi-based device-free crowd counting method which
+does not require to train the system exactly in the same
+room/environment where the system is also tested. First
+of all, the presented confusion matrices prove the eﬀecti-
+veness of our approach for the crowd counting and crowd
+density estimation. In fact, concerning crowd counting, esti-
+mation errors are less or equal to 2 persons 91% and 81%
+of time, while concerning crowd density estimation, avera-
+ge accuracies are 74% and 52% in the rooms where a spe-
+ciﬁc training is not carried out.Some future directions of
+this work includes: study of the occupancy dynamics; esti-
+mation of larger crowd in larger rooms; evaluate the im-
+pact of the transmitter and receiver locations on the system
+performance.
+7. REFERENCES
+[1] Y. Wang, J. Yang, Y. Chen, H. Liu, M. Gruteser, and
+R. P. Martin, “Tracking human queues using
+single-point signal monitoring,” in Proceedings of the
+12th Annual International Conference on Mobile
+Systems, Applications, and Services, ser. MobiSys ’14.
+New York, NY, USA: ACM, 2014, pp. 42–54. [Online].
+Available:
+[2] M. De Sanctis, E. Cianca, S. Di Domenico,
+D. Provenziani, G. Bianchi, and M. Ruggieri,
+“Wibecam: Device free human activity recognition
+through wiﬁ beacon-enabled camera,” in Proceedings of
+the 2nd Workshop on Workshop on Physical Analytics,
+ser. WPA ’15, 2015.
+[3] S. Depatla, A. Muralidharan, and Y. Mostoﬁ,
+“Occupancy estimation using only wiﬁ power
+measurements,” Selected Areas in Communications,
+IEEE Journal on, vol. 33, no. 7, pp. 1381–1393, July
+2015.
+[4] C. Xu, B. Firner, R. S. Moore, Y. Zhang, W. Trappe,
+R. Howard, F. Zhang, and N. An, “Scpl: Indoor
+device-free multi-subject counting and localization
+using radio signal strength,” in Proceedings of the 12th
+International Conference on Information Processing in
+Sensor Networks, 2013, pp. 79–90.
+[5] Y. Yuan, J. Zhao, C. Qiu, and W. Xi, “Estimating
+crowd density in an rf-based dynamic environment,”
+Sensors Journal, IEEE, vol. 13, no. 10, pp. 3837–3845,
+Oct 2013.
+[6] S. Y. Fadhlullah and W. Ismail, “A statistical approach
+in designing an rf-based human crowd density
+estimation system,” International Journal of Distributed
+Sensor Networks, vol. 2016, pp. 8 351 017:1–8 351 017:9,
+2016. [Online]. Available:
+[7] T. Yoshida and Y. Taniguchi, “Estimating the number
+of people using existing wiﬁ access point in indoor
+environment,” in Proceedings of the 6th European
+Conference of Computer Science (ECCS ’15), 2015, pp.
+46–53.
+[8] W. Xi, J. Zhao, X. Li, K. Zhao, S. Tang, X. Liu, and
+Z. Jiang, “Electronic frog eye: Counting crowd using
+wiﬁ,” in 2014 IEEE Conference on Computer
+Communications, INFOCOM 2014, Toronto, Canada,
+April 27 - May 2, 2014, 2014, pp. 361–369.
+[9] D. Halperin, W. Hu, A. Sheth, and D. Wetherall, “Tool
+release: Gathering 802.11n traces with channel state
+information,” ACM SIGCOMM CCR, vol. 41, no. 1,
+p. 53, Jan. 2011
