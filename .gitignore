@@ -1,3 +1,4 @@
 material/
 **/__pycache__/
 **/.env
+**/modelo/bge-m3/
