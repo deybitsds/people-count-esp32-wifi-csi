@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 VECTORSTORE_DIR = os.path.join(BASE, 'vectorstore', 'chroma_db')
+MODELO_DIR = os.path.join(BASE, 'modelo', 'bge-m3')
 
 api_key_llm = os.getenv("API_KEY_OPEN_ROUTER")
 base_url_llm = os.getenv("BASE_URL_OPEN_ROUTER")
@@ -121,7 +122,7 @@ class RecognizeViewSet(ViewSet):
                 print("Inicializando componentes RAG...")
 
                 RecognizeViewSet._embeddings = HuggingFaceEmbeddings(
-                    model_name="BAAI/bge-m3",
+                    model_name=MODELO_DIR,
                     model_kwargs={'device': 'cpu'}
                 )
 
