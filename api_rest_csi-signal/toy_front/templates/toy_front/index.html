@@ -5,108 +5,230 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CSI People Counter</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
-        .navbar { background: #1e293b; color: #38bdf8; padding: 14px 24px; font-size: 20px; font-weight: 600; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
-        .navbar small { font-size: 13px; color: #94a3b8; font-weight: 400; }
-        .container { max-width: 1200px; margin: 24px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-        .card { background: #1e293b; border-radius: 10px; border: 1px solid #334155; overflow: hidden; }
-        .card-full { grid-column: 1 / -1; }
-        .card-header { padding: 14px 20px; border-bottom: 1px solid #334155; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: #64748b; }
-        .card-body { padding: 20px; }
-        .big-number { font-size: 48px; font-weight: 700; text-align: center; padding: 10px 0; }
-        .big-number .label { font-size: 14px; color: #94a3b8; font-weight: 400; display: block; margin-top: 4px; }
-        .big-number.ocupado { color: #f97316; }
-        .big-number.vacio { color: #22c55e; }
-        .big-number.medio { color: #eab308; }
-        .big-number.alto { color: #ef4444; }
-        .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
-        .stat-row .stat-label { color: #94a3b8; }
-        .stat-row .stat-value { font-weight: 600; }
-        .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-        .badge.ok { background: #166534; color: #86efac; }
-        .badge.warn { background: #854d0e; color: #fde047; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { text-align: left; padding: 10px 12px; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .05em; border-bottom: 1px solid #334155; }
-        td { padding: 10px 12px; border-bottom: 1px solid #1e293b; }
-        .rssi-bar { height: 4px; background: #334155; border-radius: 2px; overflow: hidden; }
-        .rssi-bar-fill { height: 100%; background: linear-gradient(90deg, #22c55e, #eab308, #ef4444); border-radius: 2px; }
-        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #334155; border-top-color: #38bdf8; border-radius: 50%; animation: spin .8s linear infinite; margin-left: 8px; vertical-align: middle; }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 52px;
+            padding: 0 24px;
+            background: #ffffff;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        .nav-title { font-size: 14px; font-weight: 600; color: #1d1d1f; letter-spacing: -0.01em; }
+        .nav-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #86868b; }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #c7c7cc; }
+        .status-dot.online { background: #30d158; }
+
+        .layout { max-width: 1120px; margin: 0 auto; padding: 24px 20px; display: grid; grid-template-columns: 1fr; gap: 12px; }
+
+        .card {
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.04), 0 1px 2px -1px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e5e5;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #86868b;
+        }
+        .card-body { padding: 16px; }
+
+        .hero {
+            text-align: center;
+            padding: 32px 16px;
+        }
+        .hero-number {
+            font-size: 64px;
+            font-weight: 700;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+        .hero-number.vacio { color: #1d1d1f; }
+        .hero-number.medio { color: #b8860b; }
+        .hero-number.alto { color: #dc2626; }
+        .hero-detail {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #86868b;
+        }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+        .stat-row + .stat-row { border-top: 1px solid #f0f0f0; }
+        .stat-label { color: #86868b; }
+        .stat-value { font-weight: 600; font-variant-numeric: tabular-nums; color: #1d1d1f; }
+
+        .rssi-bar {
+            height: 4px;
+            background: #f0f0f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 4px 0 0;
+        }
+        .rssi-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #30d158, #ffd60a, #ff453a);
+            transition: width 0.4s ease;
+        }
+
+        .table-wrap { padding: 0; }
+        .table-wrap table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .table-wrap th {
+            text-align: left;
+            padding: 10px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #86868b;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        .table-wrap td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .table-wrap tr:last-child td { border-bottom: none; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge.vacio { background: #f0f0f0; color: #1d1d1f; }
+        .badge.medio { background: #fff3cd; color: #856404; }
+        .badge.alto { background: #fde8e8; color: #c53030; }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 16px;
+            color: #aeaeb2;
+        }
+        .empty-state p + p { margin-top: 6px; font-size: 12px; }
+        .empty-state code { color: #86868b; background: #f5f5f7; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+
+        .spinner {
+            display: inline-block;
+            width: 12px; height: 12px;
+            border: 2px solid #e5e5e5;
+            border-top-color: #1d1d1f;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .empty-state { text-align: center; padding: 40px; color: #64748b; }
-        .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
-        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-        .status-dot.online { background: #22c55e; }
-        .status-dot.offline { background: #ef4444; }
+
+        @media (min-width: 720px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
     </style>
 </head>
 <body>
-    <div class="navbar">
-        CSI People Counter
-        <small><span class="status-dot online" id="statusDot"></span><span id="statusText">Conectado</span></small>
+
+    <div class="nav">
+        <span class="nav-title">CSI People Counter</span>
+        <span class="nav-status">
+            <span class="status-dot online" id="statusDot"></span>
+            <span id="statusText">Conectado</span>
+        </span>
     </div>
 
-    <div class="container">
+    <div class="layout">
+
         <div class="card">
             <div class="card-header">Estado Actual</div>
-            <div class="card-body">
-                <div class="big-number vacio" id="estadoActual">--</div>
-                <div style="text-align:center;font-size:13px;color:#94a3b8;" id="detalleEstado">Esperando datos...</div>
+            <div class="card-body hero">
+                <div class="hero-number vacio" id="estadoActual">--</div>
+                <div class="hero-detail" id="detalleEstado">Esperando datos...</div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="card">
+                <div class="card-header">Señal</div>
+                <div class="card-body">
+                    <div class="stat-row">
+                        <span class="stat-label">RSSI</span>
+                        <span class="stat-value" id="rssiVal">--</span>
+                    </div>
+                    <div class="rssi-bar"><div class="rssi-bar-fill" id="rssiBar" style="width:0%"></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Resumen</div>
+                <div class="card-body">
+                    <div class="stat-row">
+                        <span class="stat-label">Total</span>
+                        <span class="stat-value" id="totalRegs">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Vacío</span>
+                        <span class="stat-value" id="countVacio">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Con personas</span>
+                        <span class="stat-value" id="countOcupado">0</span>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="card">
-            <div class="card-header">Señal</div>
-            <div class="card-body">
-                <div class="stat-row"><span class="stat-label">RSSI</span><span class="stat-value" id="rssiVal">--</span></div>
-                <div class="rssi-bar"><div class="rssi-bar-fill" id="rssiBar" style="width:0%"></div></div>
-                <div class="stat-row" style="margin-top:12px"><span class="stat-label">Confianza</span><span class="stat-value" id="confianzaVal">--</span></div>
-                <div class="stat-row"><span class="stat-label">Modelo</span><span class="stat-value">RF 3 clases</span></div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">Últimas Lecturas</div>
-            <div class="card-body">
-                <div class="stat-row"><span class="stat-label">Total registros</span><span class="stat-value" id="totalRegs">0</span></div>
-                <div class="stat-row"><span class="stat-label">Vacío</span><span class="stat-value" id="countVacio">0</span></div>
-                <div class="stat-row"><span class="stat-label">Ocupado</span><span class="stat-value" id="countOcupado">0</span></div>
-            </div>
-        </div>
-
-        <div class="card card-full">
             <div class="card-header">Historial de Predicciones</div>
-            <div class="card-body" style="padding:0">
-                <div id="historialBody" class="empty-state">
-                    <div class="icon">📡</div>
-                    <div>Esperando datos del ESP32...</div>
-                    <div style="margin-top:8px;font-size:12px;">Envía una petición POST a <code>/recognize/api/</code> con datos CSI</div>
+            <div class="card-body table-wrap">
+                <div id="historialEmpty" class="empty-state">
+                    <div style="margin-bottom:8px;font-size:24px;">📡</div>
+                    <p>Esperando datos del ESP32...</p>
+                    <p>Envía una petición POST a <code>/recognize/api/</code> con datos CSI</p>
                 </div>
                 <table id="historialTable" style="display:none">
-                    <thead><tr><th>Hora</th><th>RSSI</th><th>Predicción</th><th>Confianza</th></tr></thead>
+                    <thead>
+                        <tr><th>Hora</th><th>RSSI</th><th>Personas</th></tr>
+                    </thead>
                     <tbody id="historialBody"></tbody>
                 </table>
             </div>
         </div>
+
     </div>
 
     <script>
-        let lastData = null;
-
         async function fetchHistorial() {
             try {
                 const res = await fetch('/api/historial/');
                 if (!res.ok) return;
-                const data = await res.json();
-                renderHistorial(data);
-            } catch (e) {
-                console.error(e);
-            }
+                renderHistorial(await res.json());
+            } catch (e) { console.error(e); }
         }
 
         function renderHistorial(data) {
             const table = document.getElementById('historialTable');
-            const empty = document.querySelector('.empty-state');
+            const empty = document.getElementById('historialEmpty');
             const tbody = document.getElementById('historialBody');
 
             if (!data || data.length === 0) {
@@ -119,53 +241,53 @@
             if (empty) empty.style.display = 'none';
 
             const last = data[0];
-            lastData = last;
             updateDashboard(last);
 
-            const labels = {0:'Vacío', 1:'1-3 pers', 2:'4-7 pers'};
-            const classes = {0:'vacio', 1:'medio', 2:'alto'};
-            const total = data.length;
-            const nVacio = data.filter(d => d.pred === 0).length;
-            const nOcupado = total - nVacio;
-
-            document.getElementById('totalRegs').textContent = total;
-            document.getElementById('countVacio').textContent = nVacio;
-            document.getElementById('countOcupado').textContent = nOcupado;
+            document.getElementById('totalRegs').textContent = data.length;
+            document.getElementById('countVacio').textContent = data.filter(d => d.pred === 0).length;
+            document.getElementById('countOcupado').textContent = data.filter(d => d.pred !== 0).length;
 
             tbody.innerHTML = data.map(d => {
                 const ts = new Date(d.ts).toLocaleTimeString();
-                const label = labels[d.pred] || d.pred;
-                const cls = classes[d.pred] || '';
-                const conf = (d.conf * 100).toFixed(0) + '%';
+                const label = personaLabel(d.pred);
+                const cls = personaClass(d.pred);
                 const rssiNorm = Math.max(0, Math.min(100, ((d.rssi + 100) / 50) * 100));
                 return `<tr>
-                    <td>${ts}</td>
-                    <td>${d.rssi} dBm <div class="rssi-bar" style="margin-top:4px"><div class="rssi-bar-fill" style="width:${rssiNorm}%"></div></div></td>
+                    <td style="color:#86868b;">${ts}</td>
+                    <td>${d.rssi} dBm <div class="rssi-bar"><div class="rssi-bar-fill" style="width:${rssiNorm}%"></div></div></td>
                     <td><span class="badge ${cls}">${label}</span></td>
-                    <td>${conf}</td>
                 </tr>`;
             }).join('');
         }
 
+        function personaLabel(n) {
+            if (n === 0) return 'Vacío';
+            if (n === 1) return '1 persona';
+            return `${n} personas`;
+        }
+
+        function personaClass(n) {
+            if (n === 0) return 'vacio';
+            if (n <= 3) return 'medio';
+            return 'alto';
+        }
+
         function updateDashboard(last) {
-            const isVacio = last.pred === 0;
             const el = document.getElementById('estadoActual');
             const detalle = document.getElementById('detalleEstado');
-            const labels = {0:'Vacío', 1:'1-3 personas', 2:'4-7 personas'};
-            const cls = {0: 'vacio', 1: 'medio', 2: 'alto'};
+            const label = personaLabel(last.pred);
+            const cls = personaClass(last.pred);
 
-            const label = labels[last.pred] || 'Desconocido';
             el.textContent = label;
-            el.className = 'big-number ' + (cls[last.pred] || '');
+            el.className = 'hero-number ' + cls;
 
-            detalle.textContent = isVacio
+            detalle.textContent = last.pred === 0
                 ? 'No se detectan personas en la habitación'
-                : `Se detectan aproximadamente ${last.pred < 2 ? '1-3' : '4-7'} personas`;
+                : `Se detectan exactamente ${last.pred} ${last.pred === 1 ? 'persona' : 'personas'}`;
 
             document.getElementById('rssiVal').textContent = last.rssi + ' dBm';
             const rssiPct = Math.max(0, Math.min(100, ((last.rssi + 100) / 50) * 100));
             document.getElementById('rssiBar').style.width = rssiPct + '%';
-            document.getElementById('confianzaVal').textContent = (last.conf * 100).toFixed(1) + '%';
         }
 
         setInterval(fetchHistorial, 3000);

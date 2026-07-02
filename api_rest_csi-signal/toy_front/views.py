@@ -12,6 +12,6 @@ def historial_json(request):
         "ts": r.timestamp.isoformat(),
         "rssi": r.rssi,
         "pred": r.prediccion,
-        "conf": r.confianza,
+        "conf": r.confianza if r.confianza is not None else 0.0,
     } for r in qs]
     return JsonResponse(data, safe=False)

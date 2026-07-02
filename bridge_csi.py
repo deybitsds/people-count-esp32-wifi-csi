@@ -132,10 +132,9 @@ def main():
                 if resp.status_code == 200:
                     data = resp.json()
                     sent_count += 1
-                    pred = data.get('prediccion_3clases', '?')
-                    conf = data.get('confianza_3c', 0)
+                    pred = data.get('cantidad_personas', '?')
                     ts = time.strftime('%H:%M:%S')
-                    print(f"[{ts}] → {pred} (conf:{conf:.2f}) rssi:{avg_rssi} batch:{len(buffer)}")
+                    print(f"[{ts}] → {pred} personas | rssi:{avg_rssi} batch:{len(buffer)}")
                 else:
                     error_count += 1
                     print(f"[ERROR] HTTP {resp.status_code}: {resp.text[:100]}")
